@@ -1,0 +1,15 @@
+# FieldServer 配置
+FieldServer:
+  # 启动时创建的房间数量
+  RoomCount: 128
+  # 每个房间最大连接数
+  MaxConnectionsPerRoom: 64
+  # 每个连接的发送队列容量（队列长期满 = 慢消费者，断开以保护服务器）
+  SendQueueCapacity: 1024
+  # 单条消息最大字节数
+  MaxMessageBytes: 4096
+  # 对战配置（TeamSize=5 即 5v5）
+  Battle:
+    TeamSize: 5
+    PlayerHp: 100
+    AttackDamage: 20
