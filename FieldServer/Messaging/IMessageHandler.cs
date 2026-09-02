@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FieldServer.Battle;
 using FieldServer.Connections;
+using FieldServer.Movement;
 using FieldServer.Rooms;
 
 namespace FieldServer.Messaging;
@@ -24,5 +25,6 @@ public sealed class MessageContext
     public required IClientConnection Connection { get; init; }
     public required IRoomManager Rooms { get; init; }
     public required IBattleManager Battles { get; init; }
+    public required IMovementManager Movements { get; init; }
     public required CancellationToken CancellationToken { get; init; }
 }

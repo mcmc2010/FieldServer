@@ -27,13 +27,17 @@ public sealed class JoinRoomHandler : IMessageHandler
 
         if (context.Connection.CurrentRoomId == room.Id)
         {
+            var current = context.Movements.GetOrCreateMovement(room.Id);
+            if (!current.TryGet(context.Connection.Id, out var currentPos))
+                currentPos = current.Spawn(context.Connection.Id);
             await context.Connection.SendAsync(OutgoingMessage.Of(MessageTypes.Joined,
-                new JoinedPayload(room.Id, context.Connection.Id, room.MemberCount)));
+                new JoinedPayload(room.Id, context.Connection.Id, room.MemberCount, currentPos.X, currentPos.Y)));
             return;
         }
 
         if (context.Connection.CurrentRoomId is int oldRoomId)
-            RoomHelper.LeaveRoom(context.Rooms, context.Connection, oldRoomId, battles: context.Battles);
+            RoomHelper.LeaveRoom(context.Rooms, context.Connection, oldRoomId,
+                battles: context.Battles, movements: context.Movements);
 
         if (!room.TryJoin(context.Connection))
         {
@@ -42,8 +46,9 @@ public sealed class JoinRoomHandler : IMessageHandler
         }
         context.Connection.CurrentRoomId = room.Id;
 
+        var spawn = context.Movements.GetOrCreateMovement(room.Id).Spawn(context.Connection.Id);
         await context.Connection.SendAsync(OutgoingMessage.Of(MessageTypes.Joined,
-            new JoinedPayload(room.Id, context.Connection.Id, room.MemberCount)));
+            new JoinedPayload(room.Id, context.Connection.Id, room.MemberCount, spawn.X, spawn.Y)));
 
         room.Broadcast(OutgoingMessage.Of(MessageTypes.System,
             new SystemPayload($"{context.Connection.Id} 加入了房间 {room.Id}")),

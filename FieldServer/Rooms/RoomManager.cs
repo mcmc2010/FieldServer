@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Options;
 using FieldServer.Configuration;
+using FieldServer.Connections;
 
 namespace FieldServer.Rooms;
 
@@ -11,7 +12,7 @@ public sealed class RoomManager : IRoomManager
 {
     private readonly IReadOnlyDictionary<int, IRoom> _byId;
 
-    public RoomManager(IOptions<FieldServerOptions> options, ILogger<RoomManager> logger)
+    public RoomManager(IOptions<FieldServerOptions> options, IGlobalObserver observer, ILogger<RoomManager> logger)
     {
         var config = options.Value;
         if (config.RoomCount is <= 0 or > 100_000)
@@ -21,7 +22,7 @@ public sealed class RoomManager : IRoomManager
         var byId = new Dictionary<int, IRoom>(config.RoomCount);
         for (var i = 0; i < config.RoomCount; i++)
         {
-            var room = new Room(i, config.MaxConnectionsPerRoom);
+            var room = new Room(i, config.MaxConnectionsPerRoom, observer);
             rooms.Add(room);
             byId[i] = room;
         }

@@ -16,7 +16,8 @@ public sealed class LeaveRoomHandler : IMessageHandler
             return;
         }
 
-        RoomHelper.LeaveRoom(context.Rooms, context.Connection, roomId, battles: context.Battles);
+        RoomHelper.LeaveRoom(context.Rooms, context.Connection, roomId,
+            battles: context.Battles, movements: context.Movements);
         await context.Connection.SendAsync(OutgoingMessage.Of(MessageTypes.Left,
             new LeftPayload(roomId, context.Connection.Id)));
     }

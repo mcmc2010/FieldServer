@@ -22,6 +22,9 @@ public sealed class FieldServerOptions
 
     /// <summary>对战配置。</summary>
     public BattleOptions Battle { get; set; } = new();
+
+    /// <summary>移动配置。</summary>
+    public MovementOptions Movement { get; set; } = new();
 }
 
 /// <summary>
@@ -37,4 +40,22 @@ public sealed class BattleOptions
 
     /// <summary>单次攻击伤害。</summary>
     public int AttackDamage { get; set; } = 20;
+}
+
+/// <summary>
+/// 移动参数。场地为 [0, FieldWidth] × [0, FieldHeight] 的 2D 矩形。
+/// </summary>
+public sealed class MovementOptions
+{
+    /// <summary>场地宽度（X 上限）。</summary>
+    public double FieldWidth { get; set; } = 100;
+
+    /// <summary>场地高度（Y 上限）。</summary>
+    public double FieldHeight { get; set; } = 100;
+
+    /// <summary>移动速度上限（单位/秒），超过视为瞬移并拒绝。</summary>
+    public double MoveSpeed { get; set; } = 10;
+
+    /// <summary>速度校验容差倍率（容忍客户端 tick 抖动）。</summary>
+    public double SpeedTolerance { get; set; } = 1.5;
 }

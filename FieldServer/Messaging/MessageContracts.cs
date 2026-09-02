@@ -11,6 +11,12 @@ public static class MessageTypes
     public const string Chat = "chat";
     public const string Ping = "ping";
 
+    // 客户端 → 服务器（监控）
+    public const string WatchAll = "watch_all";
+
+    // 客户端 → 服务器（移动）
+    public const string Move = "move";
+
     // 客户端 → 服务器（对战）
     public const string BattleJoin = "battle_join";
     public const string BattleLeave = "battle_leave";
@@ -22,6 +28,12 @@ public static class MessageTypes
     public const string Pong = "pong";
     public const string System = "system";
     public const string Error = "error";
+
+    // 服务器 → 客户端（监控）
+    public const string Watching = "watching";
+
+    // 服务器 → 客户端（移动）
+    public const string Moved = "moved";
 
     // 服务器 → 客户端（对战）
     public const string BattleJoined = "battle_joined";
@@ -56,12 +68,20 @@ public sealed record JoinPayload(int RoomId);
 public sealed record ChatPayload(string Content);
 public sealed record PingPayload(long Timestamp);
 
-public sealed record JoinedPayload(int RoomId, string ConnectionId, int MemberCount);
+public sealed record JoinedPayload(int RoomId, string ConnectionId, int MemberCount, double X, double Y);
 public sealed record LeftPayload(int RoomId, string ConnectionId);
 public sealed record ChatEventPayload(int RoomId, string From, string Content, long Timestamp);
 public sealed record PongPayload(long Timestamp, long ServerTimestamp);
 public sealed record SystemPayload(string Content);
 public sealed record ErrorPayload(string Content);
+
+// ---- 监控消息载荷 ----
+
+public sealed record WatchingPayload(int RoomCount, int WatcherCount);
+
+// ---- 移动消息载荷 ----
+
+public sealed record MovedPayload(int RoomId, string ConnectionId, double X, double Y, long Timestamp);
 
 // ---- 对战消息载荷 ----
 

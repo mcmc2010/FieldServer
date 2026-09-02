@@ -15,13 +15,15 @@ public sealed class Room : IRoom
 
     private readonly ConcurrentDictionary<string, IClientConnection> _members = new();
     private readonly int _maxMembers;
+    private readonly IGlobalObserver _observer;
     private int _memberCount;
 
-    public Room(int id, int maxMembers)
+    public Room(int id, int maxMembers, IGlobalObserver observer)
     {
         Id = id;
         Name = $"room-{id}";
         _maxMembers = maxMembers;
+        _observer = observer;
     }
 
     public int Id { get; }
@@ -59,5 +61,6 @@ public sealed class Room : IRoom
             if (id == excludeConnectionId) continue;
             member.EnqueueRaw(payload);
         }
+        _observer.Fanout(payload); // 全局观察者（dashboard）收到全量房间事件
     }
 }

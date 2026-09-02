@@ -16,12 +16,14 @@ public sealed class Battle : IBattle
     private readonly object _gate = new();
     private readonly Dictionary<string, BattlePlayer> _players = new();
     private readonly BattleOptions _options;
+    private readonly IGlobalObserver _observer;
     private readonly ILogger _logger;
 
-    public Battle(int roomId, BattleOptions options, ILogger logger)
+    public Battle(int roomId, BattleOptions options, IGlobalObserver observer, ILogger logger)
     {
         RoomId = roomId;
         _options = options;
+        _observer = observer;
         _logger = logger;
     }
 
@@ -170,5 +172,6 @@ public sealed class Battle : IBattle
         foreach (var player in _players.Values)
             if (player.Id != excludeId)
                 player.Connection.EnqueueRaw(payload);
+        _observer.Fanout(payload); // 全局观察者（dashboard）收到全量对战事件
     }
 }

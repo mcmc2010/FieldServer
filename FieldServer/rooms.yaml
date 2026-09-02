@@ -13,3 +13,11 @@ FieldServer:
     TeamSize: 5
     PlayerHp: 100
     AttackDamage: 20
+  # 移动配置（场地为 [0, FieldWidth] x [0, FieldHeight] 的 2D 矩形）
+  Movement:
+    FieldWidth: 100
+    FieldHeight: 100
+    # 移动速度上限（单位/秒），超过视为瞬移并拒绝
+    MoveSpeed: 10
+    # 速度校验容差倍率（容忍客户端 tick 抖动）
+    SpeedTolerance: 1.5

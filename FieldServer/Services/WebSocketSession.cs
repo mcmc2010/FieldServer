@@ -6,6 +6,7 @@ using FieldServer.Battle;
 using FieldServer.Configuration;
 using FieldServer.Connections;
 using FieldServer.Messaging;
+using FieldServer.Movement;
 using FieldServer.Rooms;
 
 namespace FieldServer.Services;
@@ -21,6 +22,8 @@ public sealed class WebSocketSession
     private readonly MessageDispatcher _dispatcher;
     private readonly IRoomManager _rooms;
     private readonly IBattleManager _battles;
+    private readonly IMovementManager _movements;
+    private readonly IGlobalObserver _observer;
     private readonly FieldServerOptions _options;
     private readonly ILogger<WebSocketSession> _logger;
 
@@ -28,12 +31,16 @@ public sealed class WebSocketSession
         MessageDispatcher dispatcher,
         IRoomManager rooms,
         IBattleManager battles,
+        IMovementManager movements,
+        IGlobalObserver observer,
         IOptions<FieldServerOptions> options,
         ILogger<WebSocketSession> logger)
     {
         _dispatcher = dispatcher;
         _rooms = rooms;
         _battles = battles;
+        _movements = movements;
+        _observer = observer;
         _options = options.Value;
         _logger = logger;
     }
@@ -46,6 +53,7 @@ public sealed class WebSocketSession
             Connection = connection,
             Rooms = _rooms,
             Battles = _battles,
+            Movements = _movements,
             CancellationToken = cancellationToken
         };
 
@@ -75,7 +83,16 @@ public sealed class WebSocketSession
                     continue;
                 }
 
-                await _dispatcher.DispatchAsync(context, message);
+                try
+                {
+                    await _dispatcher.DispatchAsync(context, message);
+                }
+                catch (Exception ex) when (ex is not OperationCanceledException)
+                {
+                    // 单条消息的处理器异常不应杀死会话
+                    _logger.LogError(ex, "处理消息 {Type} 时处理器异常", message.Type);
+                    await connection.SendAsync(OutgoingMessage.Error("服务器内部错误"));
+                }
             }
         }
         catch (WebSocketException) { /* 客户端异常断开 */ }
@@ -83,8 +100,10 @@ public sealed class WebSocketSession
         finally
         {
             ArrayPool<byte>.Shared.Return(buffer);
+            _observer.Remove(connection.Id); // 若是观察者（dashboard）则注销
             if (connection.CurrentRoomId is int roomId)
-                RoomHelper.LeaveRoom(_rooms, connection, roomId, battles: _battles); // 断连自动退房+退对战
+                RoomHelper.LeaveRoom(_rooms, connection, roomId,
+                    battles: _battles, movements: _movements); // 断连自动退房+退对战+清理位置
             _logger.LogDebug("连接 {Id} 结束", connection.Id);
         }
     }

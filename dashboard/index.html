@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FieldServer Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; overflow: hidden; background: #0b0e14;
+      font: 13px/1.5 "SF Mono", Menlo, Consolas, monospace; color: #c9d4e8; }
+    #app { position: fixed; inset: 0; }
+    canvas { display: block; }
+
+    .panel { position: absolute; background: rgba(13, 18, 30, .88); border: 1px solid #26314a;
+      border-radius: 8px; padding: 10px 12px; backdrop-filter: blur(4px); }
+
+    #topbar { top: 10px; left: 10px; right: 10px; display: flex; gap: 18px; align-items: center;
+      pointer-events: none; }
+    #topbar b { color: #fff; }
+    .stat { color: #8fa1c2; } .stat span { color: #e8eefc; font-weight: 600; }
+    #conn { display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+      background: #e5484d; margin-right: 6px; vertical-align: middle; }
+    #conn.ok { background: #3ba55d; }
+
+    #rooms { left: 10px; top: 52px; bottom: 10px; width: 168px; overflow-y: auto; }
+    #rooms h3, #detail h3, #log h3 { font-size: 12px; color: #8fa1c2; margin-bottom: 6px;
+      text-transform: uppercase; letter-spacing: .5px; }
+    .room-item { padding: 3px 8px; border-radius: 4px; cursor: pointer; display: flex;
+      justify-content: space-between; color: #7f8fb0; }
+    .room-item:hover { background: #1b2438; }
+    .room-item.active { background: #243d66; color: #dbe6ff; }
+    .room-item.has-members { color: #b7c6e4; }
+    .room-item .battle { color: #ff8c1a; }
+
+    #detail { right: 10px; top: 52px; width: 300px; max-height: 46%; overflow-y: auto; }
+    #detail table { width: 100%; border-collapse: collapse; }
+    #detail td, #detail th { padding: 2px 4px; text-align: left; font-size: 12px; }
+    #detail th { color: #8fa1c2; font-weight: 400; border-bottom: 1px solid #26314a; }
+    .tag { padding: 0 5px; border-radius: 3px; font-size: 11px; }
+    .tag-a { background: #1d3a5f; color: #6fb3ff; }
+    .tag-b { background: #5f2620; color: #ff8a7a; }
+    .dead { color: #5a6579; text-decoration: line-through; }
+
+    #log { right: 10px; bottom: 10px; width: 300px; height: 42%; overflow-y: auto;
+      display: flex; flex-direction: column; }
+    #loglines { flex: 1; overflow-y: auto; }
+    #loglines div { padding: 1px 0; color: #9fb0d0; word-break: break-all; }
+    #loglines .r { color: #66788f; }
+    #loglines .sys { color: #6f7f9d; font-style: italic; }
+    #loglines .atk { color: #ffd54d; }
+    #loglines .die { color: #ff8a7a; }
+    #loglines .end { color: #7fe0a0; }
+
+    #hint { position: absolute; bottom: 10px; left: 188px; color: #56637e; font-size: 12px; }
+    ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: #2a3550; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <div id="topbar" class="panel">
+    <b>FieldServer Dashboard</b>
+    <span class="stat"><i id="conn"></i><span id="connText">连接中…</span></span>
+    <span class="stat">房间 <span id="stRooms">-</span></span>
+    <span class="stat">在线 <span id="stMembers">-</span></span>
+    <span class="stat">对战中 <span id="stBattles">-</span></span>
+    <span class="stat">活跃玩家 <span id="stPlayers">-</span></span>
+  </div>
+
+  <div id="rooms" class="panel"><h3>房间</h3><div id="roomlist"></div></div>
+
+  <div id="detail" class="panel">
+    <h3 id="detailTitle">未选中房间（点击地块）</h3>
+    <div id="detailBody"></div>
+  </div>
+
+  <div id="log" class="panel">
+    <h3>事件日志</h3>
+    <div id="loglines"></div>
+  </div>
+
+  <div id="hint">拖拽旋转 · 滚轮缩放 · 点击地块聚焦房间 · ESC 返回总览</div>
+
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

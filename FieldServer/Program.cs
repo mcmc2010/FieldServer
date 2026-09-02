@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using FieldServer.Battle;
 using FieldServer.Configuration;
+using FieldServer.Connections;
 using FieldServer.Endpoints;
 using FieldServer.Messaging;
 using FieldServer.Messaging.Handlers;
+using FieldServer.Movement;
 using FieldServer.Rooms;
 using FieldServer.Services;
 
@@ -16,8 +18,10 @@ builder.Services.Configure<FieldServerOptions>(
     builder.Configuration.GetSection(FieldServerOptions.SectionName));
 
 // ---- 核心服务 ----
+builder.Services.AddSingleton<IGlobalObserver, GlobalObserver>();
 builder.Services.AddSingleton<IRoomManager, RoomManager>();
 builder.Services.AddSingleton<IBattleManager, BattleManager>();
+builder.Services.AddSingleton<IMovementManager, MovementManager>();
 builder.Services.AddSingleton<MessageDispatcher>();
 builder.Services.AddTransient<WebSocketSession>();
 
@@ -26,35 +30,19 @@ builder.Services.AddSingleton<IMessageHandler, JoinRoomHandler>();
 builder.Services.AddSingleton<IMessageHandler, LeaveRoomHandler>();
 builder.Services.AddSingleton<IMessageHandler, ChatHandler>();
 builder.Services.AddSingleton<IMessageHandler, PingHandler>();
+builder.Services.AddSingleton<IMessageHandler, MoveHandler>();
 builder.Services.AddSingleton<IMessageHandler, BattleJoinHandler>();
 builder.Services.AddSingleton<IMessageHandler, BattleLeaveHandler>();
 builder.Services.AddSingleton<IMessageHandler, BattleActionHandler>();
+builder.Services.AddSingleton<IMessageHandler, WatchAllHandler>();
 
 var app = builder.Build();
 
 app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(30) });
 
-app.MapGet("/", () => Results.Text("FieldServer is running", "text/plain"));
-
-// HTTP API（原 TestServer 合并而来；新增端点在 Endpoints/ 下扩展）
+// HTTP 端点（全部在 Endpoints/ 下统一管理；新增端点 = 新建 MapXxxEndpoints + 调用一行）
+app.MapDebugEndpoints();
 app.MapWeatherEndpoints();
-
-// 房间状态（可用来验证 YAML 配置是否生效）
-app.MapGet("/rooms", (IRoomManager rooms) => Results.Json(new
-{
-    roomCount = rooms.RoomCount,
-    totalMembers = rooms.Rooms.Sum(r => r.MemberCount),
-    rooms = rooms.Rooms.Select(r => new { r.Id, r.Name, r.MemberCount })
-}));
-
-// 对战状态
-app.MapGet("/battles/{roomId:int}", (int roomId, IBattleManager battles) =>
-{
-    var battle = battles.GetBattle(roomId);
-    return battle is null
-        ? Results.NotFound(new { roomId, state = "none" })
-        : Results.Json(new { roomId, state = battle.State.ToString(), players = battle.PlayerCount });
-});
 
 // WebSocket 入口
 app.Map("/ws", async (HttpContext context, [FromServices] WebSocketSession session) =>
